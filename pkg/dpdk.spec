@@ -23,9 +23,22 @@ ExclusiveArch: i686 x86_64 aarch64
 %global config %{_arch}-native-linuxapp-gcc
 %endif
 
-BuildRequires: kernel-devel, kernel-headers, libpcap-devel
-BuildRequires: doxygen, python-sphinx, inkscape
-BuildRequires: texlive-collection-latexextra
+BuildRequires: doxygen, zlib-devel
+%if ! 0%{?rhel_version}
+BuildRequires: libpcap-devel
+%endif
+%if 0%{?suse_version}
+BuildRequires: libnuma-devel, libelf-devel
+BuildRequires:  %{kernel_module_package_buildreqs}
+%if 0%{?sle_version} >= 150000
+BuildRequires:  rdma-core-devel
+%endif
+%else
+%if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
+BuildRequires: numactl-devel, elfutils-libelf-devel
+BuildRequires: kernel-devel, kernel-headers
+%endif
+%endif
 
 %description
 DPDK core includes kernel modules, core libraries and tools.
@@ -58,9 +71,18 @@ sed -ri 's,(RTE_APP_TEST=).*,\1n,'         %{target}/.config
 sed -ri 's,(RTE_BUILD_SHARED_LIB=).*,\1y,' %{target}/.config
 sed -ri 's,(RTE_NEXT_ABI=).*,\1n,'         %{target}/.config
 sed -ri 's,(LIBRTE_VHOST=).*,\1y,'         %{target}/.config
+%if ! 0%{?rhel_version}
 sed -ri 's,(LIBRTE_PMD_PCAP=).*,\1y,'      %{target}/.config
+%endif
+%if 0%{?suse_version}
+export RTE_KERNELDIR=/usr/src/linux-obj/%{_target_cpu}/default
+%else
+%if 0%{?fedora} || 0%{?rhel_version} || 0%{?centos_version}
+export RTE_KERNELDIR=/usr/src/kernels/*
+%endif
+%endif
 make O=%{target} %{?_smp_mflags}
-make O=%{target} doc
+make O=%{target} doc-api-html
 
 %install
 rm -rf %{buildroot}
@@ -72,10 +94,12 @@ make install O=%{target} DESTDIR=%{buildroot} \
 %files
 %dir %{_datadir}/dpdk
 %{_datadir}/dpdk/usertools
-/lib/modules/%(uname -r)/extra/*
+%ifnarch %{ix86}
+/lib/modules/*/extra
+%endif
 %{_sbindir}/*
 %{_bindir}/*
-%{_libdir}/*
+%{_libdir}/*.so.*
 
 %files devel
 %{_includedir}/dpdk
@@ -83,14 +107,19 @@ make install O=%{target} DESTDIR=%{buildroot} \
 %{_datadir}/dpdk/buildtools
 %{_datadir}/dpdk/%{target}
 %{_datadir}/dpdk/examples
+%{_libdir}/*.so
 
 %files doc
 %doc %{_docdir}/dpdk
 
 %post
 /sbin/ldconfig
+%ifarch %{ix86}
 /sbin/depmod
+%endif
 
 %postun
 /sbin/ldconfig
+%ifarch %{ix86}
 /sbin/depmod
+%endif
