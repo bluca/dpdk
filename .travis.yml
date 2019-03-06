@@ -8,6 +8,10 @@ dist: xenial
 os:
   - linux
 
+cache:
+  directories:
+    - '$HOME/.sonar/cache'
+
 addons:
   apt:
     update: true
@@ -68,6 +72,17 @@ matrix:
         packages:
           - [libbsd-dev, libpcap-dev, libcrypto++-dev, libjansson4]
           - [libnuma-dev, linux-headers-$(uname -r), python3-setuptools, python3-wheel, python3-pip, ninja-build]
-
+  - env: DEF_LIB="shared" SONAR=1
+    os: linux
+    compiler: clang
+    addons:
+      apt:
+        packages:
+          - [libbsd-dev, libpcap-dev, libcrypto++-dev, libjansson4]
+          - [libnuma-dev, linux-headers-$(uname -r), python3-setuptools, python3-wheel, python3-pip, ninja-build]
+      sonarcloud:
+        organization: "bluca-github"
+        token:
+          secure: "qXObKJinYAl7aMFoDDp9BZ1qY0QXiXiMua3xrPQ9licV5MhU0ySUHleg+jZXGe5KO7XurOooFaESH5/T/17qNB5tpjM9n/HeUpJrVzMaZ2Ac8RggjHmdjOi/5WDCWQNAOpN4U0A1kc2+0EmP/Na/AXYKUgh2qtRf09L7UJdWXaDbc1vLczvht5+sAS9FyXNKlOjXyBz01TrF4EVJ6PyveQXUKUQ68YytBsyhRviYMAPGbmidQBB1YZwjvz8TeeskaDDoXpYTuYUdreHt98Ihp1rXbQlQ9xY73yy6o4gPn/MDYtaokdqKqVf2BOBW5bW/6L5FtpddGtKf4DI/ILOl7E9ST8u3MBMys5BR2Nfs7i3AOCZ4UmEFByiJCC2koGaZEDTgV9luSVklcrytHewsLzzxOZimHRawcz2VgFc/0Eab7WrwZ1vObeQrBnILMlLf8RsF9JLFBSh/4DyKAK0jMyDQAJBALY8a+AO3787WN+D/K4ZCKYpXNf6TxlOJR8JRglycjiukmVoOTu4APWXvL+azAfWLY1ZiZKHnncFO4mQap3XI093uVUZnhQRDsn0c6vGoklvKM35NaFBchvKylPFXxrymaBMpWbZf/RSo3kAf+Xur52fzSRXiCEJTj/P1bvr37HVzkyi8CkWwJdYq0x1DkB+TUrDx7lmsZGp2YwE="
 
 script: ./.ci/${TRAVIS_OS_NAME}-build.sh
